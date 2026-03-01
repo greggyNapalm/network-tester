@@ -71,7 +71,7 @@ echo "Detected platform: ${OS}/${ARCH}"
 
 # Resolve version
 if [ "$VERSION" = "latest" ]; then
-  VERSION="$(curl -sSfL "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" | grep '"tag_name"' | sed -E 's/.*"tag_name":\s*"([^"]+)".*/\1/')"
+  VERSION="$(curl -sSfL "https://api.github.com/repos/${GITHUB_REPO}/releases/latest" | grep -o '"tag_name": *"[^"]*"' | grep -o '"v[^"]*"' | tr -d '"')"
   if [ -z "$VERSION" ]; then
     echo "Error: could not determine latest version." >&2
     exit 1
