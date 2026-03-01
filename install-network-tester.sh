@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Install network-tester binary for the current platform.
+# Installer version: 0.1.0
 #
 # Usage:
 #   curl -sSfL https://raw.githubusercontent.com/OWNER/REPO/main/scripts/install-network-tester.sh | bash
