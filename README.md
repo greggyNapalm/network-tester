@@ -16,6 +16,15 @@
 
 `network-tester` is the checker agent that powers [Oack](https://oack.io/). It runs on your infrastructure (bare metal, VM, or Docker) and performs HTTP health checks against your monitors, reporting results back to the Oack platform.
 
+### Features
+
+- **HTTP probing** — per-phase latency breakdown (DNS, TCP connect, TLS handshake, send, wait, receive)
+- **TCP_INFO metrics** — kernel-level RTT, retransmits, congestion window (Linux)
+- **Traceroute** — ICMP traceroute with automatic UDP fallback, per-hop RTT and loss stats (Linux, requires `CAP_NET_RAW`)
+- **Pcap capture** — optional per-probe packet capture in debug mode (requires `-tags pcap` build, CGO, libpcap)
+- **Real-time streaming** — results sent over WebSocket with automatic reconnection
+- **OAuth device flow** — secure authentication with local token cache
+
 ## Quick Start
 
 ### Binary (Linux / macOS / FreeBSD)
@@ -39,18 +48,46 @@ docker pull greggynapalm/network-tester:latest
 
 mkdir -p $HOME/.net-checker-data
 docker run --rm \
+    --cap-add NET_RAW \
     -v $HOME/.net-checker-data:/data \
     greggynapalm/network-tester:latest \
     --token-db /data/tokens.db --mode shared
 ```
 
+## Linux capabilities
+
+Traceroute requires raw ICMP sockets. Grant `CAP_NET_RAW` via one of:
+
+**systemd (recommended):**
+```ini
+[Service]
+AmbientCapabilities=CAP_NET_RAW
+```
+
+**setcap on the binary:**
+```bash
+sudo setcap cap_net_raw+ep /usr/local/bin/network-tester
+```
+
+**Docker:**
+```bash
+docker run --cap-add NET_RAW ...
+```
+
+Without `CAP_NET_RAW`, the agent still runs HTTP probes normally — traceroute is silently skipped.
+
+The agent logs its capabilities at startup:
+```json
+{"msg":"network-tester","cap_net_raw":true,"pcap":false,"version":"0.5.1"}
+```
+
 ## Supported Platforms
 
-| OS | Architecture |
-|----|-------------|
-| Linux | amd64, arm64 |
-| macOS | amd64 (Intel), arm64 (Apple Silicon) |
-| FreeBSD | amd64, arm64 |
+| OS | Architecture | Traceroute |
+|----|-------------|------------|
+| Linux | amd64, arm64 | ICMP + UDP fallback |
+| macOS | amd64 (Intel), arm64 (Apple Silicon) | not supported |
+| FreeBSD | amd64, arm64 | not supported |
 
 ## Learn More
 
